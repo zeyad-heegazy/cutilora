@@ -31,6 +31,7 @@ final class GeoStarterSeeder extends ParentSeeder
         });
 
         $this->command?->info('Geo seeding completed.');
+
         $this->command?->table(
             ['Entity', 'Imported'],
             [
@@ -45,8 +46,6 @@ final class GeoStarterSeeder extends ParentSeeder
     /**
      * Egypt:
      * Governorate -> Administrative District -> Shiyakha
-     *
-     * Your current City model represents the second level.
      */
     private function seedEgypt(): void
     {
@@ -54,40 +53,79 @@ final class GeoStarterSeeder extends ParentSeeder
 
         $country = Country::query()->updateOrCreate(
             ['code' => 'EG'],
-            ['name' => 'Egypt']
+            [
+                'name' => 'Egypt',
+                'name_ar' => 'مصر',
+            ]
         );
 
         $this->stats['countries']++;
 
         foreach ($data['data'] ?? [] as $governorateData) {
+            $governorateName = $this->englishName($governorateData);
+
+            $governorateCode = $this->sourceCode(
+                $governorateData,
+                ['code', 'id', 'governorate_id']
+            );
+
             $governorate = Governorate::query()->updateOrCreate(
+                $this->identity(
+                    ['country_id' => $country->id],
+                    $governorateCode,
+                    $governorateName
+                ),
                 [
-                    'country_id' => $country->id,
-                    'name' => $this->englishName($governorateData),
-                ],
-                []
+                    'name' => $governorateName,
+                    'name_ar' => $this->arabicName($governorateData),
+                    'code' => $governorateCode,
+                ]
             );
 
             $this->stats['governorates']++;
 
             foreach ($governorateData['district'] ?? [] as $cityData) {
+                $cityName = $this->englishName($cityData);
+
+                $cityCode = $this->sourceCode(
+                    $cityData,
+                    ['code', 'id', 'district_id']
+                );
+
                 $city = City::query()->updateOrCreate(
+                    $this->identity(
+                        ['governorate_id' => $governorate->id],
+                        $cityCode,
+                        $cityName
+                    ),
                     [
-                        'governorate_id' => $governorate->id,
-                        'name' => $this->englishName($cityData),
-                    ],
-                    []
+                        'name' => $cityName,
+                        'name_ar' => $this->arabicName($cityData),
+                        'code' => $cityCode,
+                    ]
                 );
 
                 $this->stats['cities']++;
 
                 foreach ($cityData['shiyakha'] ?? [] as $districtData) {
+                    $districtName = $this->englishName($districtData);
+
+                    $districtCode = $this->sourceCode(
+                        $districtData,
+                        ['code', 'id', 'shiyakha_id']
+                    );
+
                     District::query()->updateOrCreate(
+                        $this->identity(
+                            ['city_id' => $city->id],
+                            $districtCode,
+                            $districtName
+                        ),
                         [
-                            'city_id' => $city->id,
-                            'name' => $this->englishName($districtData),
-                        ],
-                        []
+                            'name' => $districtName,
+                            'name_ar' => $this->arabicName($districtData),
+                            'code' => $districtCode,
+                        ]
                     );
 
                     $this->stats['districts']++;
@@ -99,8 +137,6 @@ final class GeoStarterSeeder extends ParentSeeder
     /**
      * Saudi Arabia:
      * Region -> City -> District
-     *
-     * Your Governorate model represents the administrative region.
      */
     private function seedSaudiArabia(): void
     {
@@ -110,7 +146,10 @@ final class GeoStarterSeeder extends ParentSeeder
 
         $country = Country::query()->updateOrCreate(
             ['code' => 'SA'],
-            ['name' => 'Saudi Arabia']
+            [
+                'name' => 'Saudi Arabia',
+                'name_ar' => 'المملكة العربية السعودية',
+            ]
         );
 
         $this->stats['countries']++;
@@ -119,45 +158,87 @@ final class GeoStarterSeeder extends ParentSeeder
         $citiesByRegion = [];
 
         foreach ($cities as $cityData) {
-            $citiesByRegion[$cityData['region_id']][] = $cityData;
+            $citiesByRegion[(string) $cityData['region_id']][] = $cityData;
         }
 
         // Group districts by city.
         $districtsByCity = [];
 
         foreach ($districts as $districtData) {
-            $districtsByCity[$districtData['city_id']][] = $districtData;
+            $districtsByCity[(string) $districtData['city_id']][] = $districtData;
         }
 
         foreach ($regions as $regionData) {
+            $regionName = $this->englishName($regionData);
+
+            $regionCode = $this->sourceCode(
+                $regionData,
+                ['region_id', 'code', 'id']
+            );
+
             $governorate = Governorate::query()->updateOrCreate(
+                $this->identity(
+                    ['country_id' => $country->id],
+                    $regionCode,
+                    $regionName
+                ),
                 [
-                    'country_id' => $country->id,
-                    'name' => $regionData['name_en'],
-                ],
-                []
+                    'name' => $regionName,
+                    'name_ar' => $this->arabicName($regionData),
+                    'code' => $regionCode,
+                ]
             );
 
             $this->stats['governorates']++;
 
-            foreach ($citiesByRegion[$regionData['region_id']] ?? [] as $cityData) {
+            foreach (
+                $citiesByRegion[(string) $regionCode] ?? []
+                as $cityData
+            ) {
+                $cityName = $this->englishName($cityData);
+
+                $cityCode = $this->sourceCode(
+                    $cityData,
+                    ['city_id', 'code', 'id']
+                );
+
                 $city = City::query()->updateOrCreate(
+                    $this->identity(
+                        ['governorate_id' => $governorate->id],
+                        $cityCode,
+                        $cityName
+                    ),
                     [
-                        'governorate_id' => $governorate->id,
-                        'name' => $cityData['name_en'],
-                    ],
-                    []
+                        'name' => $cityName,
+                        'name_ar' => $this->arabicName($cityData),
+                        'code' => $cityCode,
+                    ]
                 );
 
                 $this->stats['cities']++;
 
-                foreach ($districtsByCity[$cityData['city_id']] ?? [] as $districtData) {
+                foreach (
+                    $districtsByCity[(string) $cityCode] ?? []
+                    as $districtData
+                ) {
+                    $districtName = $this->englishName($districtData);
+
+                    $districtCode = $this->sourceCode(
+                        $districtData,
+                        ['district_id', 'code', 'id']
+                    );
+
                     District::query()->updateOrCreate(
+                        $this->identity(
+                            ['city_id' => $city->id],
+                            $districtCode,
+                            $districtName
+                        ),
                         [
-                            'city_id' => $city->id,
-                            'name' => $districtData['name_en'],
-                        ],
-                        []
+                            'name' => $districtName,
+                            'name_ar' => $this->arabicName($districtData),
+                            'code' => $districtCode,
+                        ]
                     );
 
                     $this->stats['districts']++;
@@ -167,7 +248,117 @@ final class GeoStarterSeeder extends ParentSeeder
     }
 
     /**
-     * Read and decode a JSON dataset.
+     * Build an upsert identity using source code when available.
+     */
+    private function identity(
+        array $parent,
+        ?string $code,
+        string $name
+    ): array {
+        return $parent + ['name' => $name];
+    }
+
+    /**
+     * Extract English name.
+     */
+    private function englishName(array $data): string
+    {
+        $name = $data['name'] ?? null;
+
+        if (is_array($name)) {
+            $name = $name['en']
+                ?? $name['english']
+                ?? $name['local']
+                ?? null;
+        }
+
+        $name = $name
+            ?? $data['name_en']
+            ?? $data['nameEn']
+            ?? null;
+
+        $name = is_string($name) ? trim($name) : '';
+
+        if ($name === '') {
+            throw new RuntimeException(
+                'Geographic record has no English name: '
+                . json_encode($data, JSON_UNESCAPED_UNICODE)
+            );
+        }
+
+        return $name;
+    }
+
+    /**
+     * Extract Arabic name.
+     */
+    private function arabicName(array $data): ?string
+    {
+        $name = $data['name'] ?? null;
+
+        if (is_array($name)) {
+            $name = $name['ar']
+                ?? $name['arabic']
+                ?? null;
+        } else {
+            $name = null;
+        }
+
+        $name = $name
+            ?? $data['name_ar']
+            ?? $data['nameAr']
+            ?? null;
+
+        if (!is_string($name)) {
+            return null;
+        }
+
+        $name = trim($name);
+
+        return $name !== '' ? $name : null;
+    }
+
+    /**
+     * Extract original source identifier.
+     */
+
+    private function sourceCode(
+        array $data,
+        array $keys
+    ): ?string {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $data)) {
+                continue;
+            }
+
+            $value = $data[$key];
+
+            // Handle nested localized identifiers.
+            if (is_array($value)) {
+                $value = $value['en']
+                    ?? $value['id']
+                    ?? $value['code']
+                    ?? $value['local']
+                    ?? null;
+            }
+
+            if (!is_string($value) && !is_numeric($value)) {
+                continue;
+            }
+
+            $value = trim((string) $value);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Read JSON dataset.
      */
     private function readJson(string $filename): array
     {
@@ -201,25 +392,5 @@ final class GeoStarterSeeder extends ParentSeeder
         }
 
         return $data;
-    }
-
-    /**
-     * Get English location name from the Egypt dataset.
-     */
-    private function englishName(array $data): string
-    {
-        $name = trim(
-            $data['name']['en']
-            ?? $data['name']['local']
-            ?? ''
-        );
-
-        if ($name === '') {
-            throw new RuntimeException(
-                'A geographic record has an empty name.'
-            );
-        }
-
-        return $name;
     }
 }

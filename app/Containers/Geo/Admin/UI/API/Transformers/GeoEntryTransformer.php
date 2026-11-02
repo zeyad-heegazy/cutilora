@@ -15,12 +15,12 @@ final class GeoEntryTransformer extends ParentTransformer
     {
         $data = [
             'id' => $entry->getHashedKey(),
-            'name' => $entry->name,
+            'name_en' => $entry->name,
+            'name_ar' => $entry->name_ar,
+            'code' => $entry->code,
         ];
 
-        if ($entry instanceof Country) {
-            $data['code'] = $entry->code;
-        } elseif ($entry instanceof Governorate) {
+        if ($entry instanceof Governorate) {
             $data['country_id'] = $entry->country?->getHashedKey();
         } elseif ($entry instanceof City) {
             $data['governorate_id'] = $entry->governorate?->getHashedKey();
