@@ -5,6 +5,7 @@ use Apiato\Http\Middleware\ProcessETag;
 use Apiato\Http\Middleware\ValidateJsonContent;
 use App\Containers\AppSection\Authentication\UI\WEB\Controllers\HomePageController;
 use App\Containers\AppSection\Authentication\UI\WEB\Controllers\LoginController;
+use App\Ship\Middleware\EnsurePlatformAdmin;
 use App\Ship\Middleware\ValidateAppId;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,9 @@ return Application::configure(basePath: $basePath)
         then: static fn () => $apiato->registerApiRoutes(),
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'platform-admin' => EnsurePlatformAdmin::class,
+        ]);
         $middleware->use([
             ValidateAppId::class,
         ]);

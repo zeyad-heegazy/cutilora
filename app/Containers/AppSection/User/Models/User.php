@@ -28,6 +28,7 @@ final class User extends ParentUserModel
         'password' => 'hashed',
         'gender' => Gender::class,
         'birth' => 'immutable_date',
+        'is_platform_admin' => 'boolean',
     ];
 
     public function newCollection(array $models = []): UserCollection
