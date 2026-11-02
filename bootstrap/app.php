@@ -22,7 +22,7 @@ return Application::configure(basePath: $basePath)
         web: $apiato->webRoutes(),
         channels: __DIR__ . '/../app/Ship/Broadcasting/channels.php',
         health: '/up',
-        then: static fn () => $apiato->registerApiRoutes(),
+        then: static fn() => $apiato->registerApiRoutes(),
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
@@ -43,5 +43,5 @@ return Application::configure(basePath: $basePath)
         });
     })
     ->withCommands($apiato->commands())
-    ->withExceptions(static function (Exceptions $exceptions) {})
+    ->withExceptions(static function (Exceptions $exceptions) { })
     ->create();
