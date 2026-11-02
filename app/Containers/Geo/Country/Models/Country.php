@@ -10,6 +10,7 @@ final class Country extends ParentModel
 {
     protected $fillable = [
         'name',
+        'name_ar',
         'code',
     ];
 

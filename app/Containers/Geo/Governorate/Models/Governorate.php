@@ -14,6 +14,8 @@ final class Governorate extends ParentModel
     protected $fillable = [
         'country_id',
         'name',
+        'name_ar',
+        'code',
     ];
 
     protected $casts = [

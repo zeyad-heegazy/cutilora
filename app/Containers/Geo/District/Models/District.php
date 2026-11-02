@@ -13,6 +13,8 @@ final class District extends ParentModel
     protected $fillable = [
         'city_id',
         'name',
+        'name_ar',
+        'code',
     ];
 
     protected $casts = [

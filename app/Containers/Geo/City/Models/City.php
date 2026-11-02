@@ -14,6 +14,8 @@ final class City extends ParentModel
     protected $fillable = [
         'governorate_id',
         'name',
+        'name_ar',
+        'code',
     ];
 
     protected $casts = [

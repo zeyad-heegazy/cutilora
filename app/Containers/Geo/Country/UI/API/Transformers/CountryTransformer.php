@@ -16,7 +16,8 @@ final class CountryTransformer extends ParentTransformer
         return [
             'type' => $country->getResourceKey(),
             'id' => $country->getHashedKey(),
-            'name' => $country->name,
+            'name_en' => $country->name,
+            'name_ar' => $country->name_ar,
             'code' => $country->code,
             'created_at' => $country->created_at,
             'updated_at' => $country->updated_at,
