@@ -12,13 +12,14 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 $basePath = dirname(__DIR__);
 $apiato = Apiato::configure(basePath: $basePath)->create();
 
 $apiato->withRouting(function (Routing $routing): void {
     $routing->resolveApiVersionUsing(
-        static fn (string $file): string => \\Illuminate\\Support\\Str::of(basename($file))
+        static fn (string $file): string => Str::of(basename($file))
             ->before('.php')
             ->betweenFirst('.', '.')
             ->value(),
