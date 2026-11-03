@@ -4,23 +4,31 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/internal/deploy', function () {
+    $clearExitCode = Artisan::call('optimize:clear');
+    $clearOutput = Artisan::output();
 
-    $exitCode = Artisan::call('cutilora:deploy');
+    $routes = collect(app('router')->getRoutes());
 
-    $output = Artisan::output();
+    $loginRoutes = $routes
+        ->filter(fn ($route) => str_contains($route->uri(), 'auth/platform/login'))
+        ->map(fn ($route) => [
+            'uri' => $route->uri(),
+            'methods' => $route->methods(),
+            'action' => $route->getActionName(),
+        ])
+        ->values()
+        ->all();
 
-    if ($exitCode !== 0) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Deployment failed.',
-            'output' => $output,
-        ], 500);
-    }
+    $apiRoutesCount = $routes
+        ->filter(fn ($route) => str_starts_with($route->uri(), 'v1/'))
+        ->count();
 
     return response()->json([
-        'success' => true,
-        'message' => 'Deployment completed successfully.',
-        'output' => $output,
-    ]);
-
+        'success' => $clearExitCode === 0,
+        'message' => 'Cache clear and route diagnostics completed.',
+        'cache_clear_output' => $clearOutput,
+        'platform_login_routes' => $loginRoutes,
+        'registered_v1_api_routes_count' => $apiRoutesCount,
+        'login_route_registered' => ! empty($loginRoutes),
+    ], $clearExitCode === 0 ? 200 : 500);
 });
