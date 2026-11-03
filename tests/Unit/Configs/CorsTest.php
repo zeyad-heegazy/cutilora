@@ -11,12 +11,18 @@ final class CorsTest extends ShipTestCase
     public function testConfigHasCorrectValues(): void
     {
         $config = config('cors');
+        $expectedOrigins = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env(
+                'CORS_ALLOWED_ORIGINS',
+                env('FRONTEND_URL', 'http://localhost:5173'),
+            )),
+        )));
+
         $expected = [
             'paths' => ['*', 'sanctum/csrf-cookie'],
             'allowed_methods' => ['*'],
-            'allowed_origins' => [
-                'url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:3000')),
-            ],
+            'allowed_origins' => $expectedOrigins,
             'allowed_origins_patterns' => [],
             'allowed_headers' => ['*'],
             'exposed_headers' => [],
