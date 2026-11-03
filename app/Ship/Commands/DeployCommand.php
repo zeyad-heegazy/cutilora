@@ -9,7 +9,7 @@ class DeployCommand extends Command
 {
     protected $signature = 'cutilora:deploy';
 
-    protected $description = 'Run Cutilora deployment tasks';
+    protected $description = 'Clear caches and diagnose API route registration';
 
     public function handle(): int
     {
@@ -20,7 +20,9 @@ class DeployCommand extends Command
 
         $this->components->info('Checking API route registration...');
 
-        $loginRoutes = collect(app('router')->getRoutes())
+        $routes = collect(app('router')->getRoutes());
+
+        $loginRoutes = $routes
             ->filter(fn ($route) => str_contains($route->uri(), 'auth/platform/login'))
             ->map(fn ($route) => [
                 'uri' => $route->uri(),
@@ -30,16 +32,13 @@ class DeployCommand extends Command
             ->values()
             ->all();
 
-        $apiRoutes = collect(app('router')->getRoutes())
+        $apiRoutesCount = $routes
             ->filter(fn ($route) => str_starts_with($route->uri(), 'v1/'))
-            ->map(fn ($route) => $route->uri())
-            ->values()
-            ->all();
+            ->count();
 
         $this->line('Platform login routes:');
         $this->line(json_encode($loginRoutes, JSON_PRETTY_PRINT));
-
-        $this->line('Registered v1 API routes count: ' . count($apiRoutes));
+        $this->line('Registered v1 API routes count: ' . $apiRoutesCount);
 
         if (empty($loginRoutes)) {
             $this->components->error('Platform login route is NOT registered.');
@@ -47,46 +46,7 @@ class DeployCommand extends Command
             $this->components->success('Platform login route is registered.');
         }
 
-        $commands = [
-            'Migrations' => [
-                'migrate',
-                ['--force' => true],
-            ],
-
-            'First Platform Admin Seeder' => [
-                'db:seed',
-                [
-                    '--class' => 'App\\Containers\\AppSection\\User\\Data\\Seeders\\FirstPlatformAdminSeeder',
-                    '--force' => true,
-                ],
-            ],
-
-            'Geo Starter Seeder' => [
-                'db:seed',
-                [
-                    '--class' => 'App\\Containers\\Geo\\Admin\\Data\\Seeders\\GeoStarterSeeder',
-                    '--force' => true,
-                ],
-            ],
-        ];
-
-        foreach ($commands as $name => [$command, $arguments]) {
-            $this->components->info("Running: {$name}");
-
-            $exitCode = Artisan::call($command, $arguments);
-
-            $this->output->write(Artisan::output());
-
-            if ($exitCode !== self::SUCCESS) {
-                $this->components->error("Failed: {$name}");
-
-                return self::FAILURE;
-            }
-
-            $this->components->success("Completed: {$name}");
-        }
-
-        $this->components->success('Cutilora deployment completed successfully.');
+        $this->components->success('Deployment diagnostics completed.');
 
         return self::SUCCESS;
     }
