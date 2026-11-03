@@ -13,9 +13,13 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Laravel\Passport\Passport;
 
 $basePath = dirname(__DIR__);
 $apiato = Apiato::configure(basePath: $basePath)->create();
+
+// InfinityFree enforces 0644 permissions on uploaded Passport key files.
+Passport::$validateKeyPermissions = false;
 
 $apiato->withRouting(function (Routing $routing): void {
     $routing->resolveApiVersionUsing(
