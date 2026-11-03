@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\\Support\\Facades\\Route;
-use Illuminate\\Support\\Facades\\Artisan;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('/internal/deploy', function () {
     $clearExitCode = Artisan::call('optimize:clear');
