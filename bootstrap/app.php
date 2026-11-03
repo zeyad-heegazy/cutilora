@@ -43,9 +43,11 @@ return Application::configure(basePath: $basePath)
         $middleware->alias([
             'platform-admin' => EnsurePlatformAdmin::class,
         ]);
-        $middleware->use([
-            ValidateAppId::class,
-        ]);
+
+        // Keep Laravel's default global stack and run CORS before app-id validation.
+        // Replacing the global stack with use() would remove HandleCors.
+        $middleware->append(ValidateAppId::class);
+
         $middleware->api(append: [
             ValidateJsonContent::class,
             ProcessETag::class,

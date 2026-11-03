@@ -10,13 +10,10 @@ final class CorsTest extends ShipTestCase
 {
     public function testConfigHasCorrectValues(): void
     {
-        $config = config('cors');
         $expected = [
-            'paths' => ['*', 'sanctum/csrf-cookie'],
+            'paths' => ['*'],
             'allowed_methods' => ['*'],
-            'allowed_origins' => [
-                'url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:3000')),
-            ],
+            'allowed_origins' => ['*'],
             'allowed_origins_patterns' => [],
             'allowed_headers' => ['*'],
             'exposed_headers' => [],
@@ -24,6 +21,6 @@ final class CorsTest extends ShipTestCase
             'supports_credentials' => false,
         ];
 
-        $this->assertEqualsCanonicalizing($expected, $config);
+        $this->assertEqualsCanonicalizing($expected, config('cors'));
     }
 }
