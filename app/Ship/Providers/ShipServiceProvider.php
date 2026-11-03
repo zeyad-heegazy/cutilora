@@ -9,6 +9,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Schema;
 
 final class ShipServiceProvider extends ParentServiceProvider
 {
@@ -19,6 +20,7 @@ final class ShipServiceProvider extends ParentServiceProvider
         Date::use(CarbonImmutable::class);
         Model::shouldBeStrict(!app()->isProduction());
         UserModel::shouldBeStrict(!app()->isProduction());
+        Schema::defaultStringLength(190);
     }
 
     public function registerMacros(): void
