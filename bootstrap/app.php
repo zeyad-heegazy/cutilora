@@ -1,6 +1,7 @@
 <?php
 
 use Apiato\Foundation\Apiato;
+use Apiato\Foundation\Configuration\Routing;
 use Apiato\Http\Middleware\ProcessETag;
 use Apiato\Http\Middleware\ValidateJsonContent;
 use App\Containers\AppSection\Authentication\UI\WEB\Controllers\HomePageController;
@@ -14,6 +15,15 @@ use Illuminate\Http\Request;
 
 $basePath = dirname(__DIR__);
 $apiato = Apiato::configure(basePath: $basePath)->create();
+
+$apiato->withRouting(function (Routing $routing): void {
+    $routing->resolveApiVersionUsing(
+        static fn (string $file): string => \\Illuminate\\Support\\Str::of(basename($file))
+            ->before('.php')
+            ->betweenFirst('.', '.')
+            ->value(),
+    );
+});
 
 return Application::configure(basePath: $basePath)
     ->withProviders($apiato->providers())
